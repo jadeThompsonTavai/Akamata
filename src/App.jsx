@@ -1,10 +1,14 @@
-import { Link, Navigate, Route, Routes } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './lib/useAuth'
+import { Mark } from './components/Art'
+import Footer from './components/Footer'
 import Library from './pages/Library'
 import Module from './pages/Module'
 import Account from './pages/Account'
 import Admin from './pages/Admin'
 import Editor from './pages/Editor'
+import { Privacy, Story, Terms } from './pages/Static'
 
 function AdminOnly({ children }) {
   const { ready, session, profile, isAdmin } = useAuth()
@@ -15,25 +19,39 @@ function AdminOnly({ children }) {
 
 export default function App() {
   const { session, profile, isAdmin } = useAuth()
+  const { pathname, hash } = useLocation()
+  const home = pathname === '/'
+
+  useEffect(() => { if (!hash) window.scrollTo(0, 0) }, [pathname, hash])
+
   return (
     <>
-      <header>
-        <Link to="/" className="logo">Akamata</Link>
-        <nav>
-          {isAdmin && <Link to="/admin">Manage content</Link>}
-          <Link to="/account">{session ? (profile?.name || 'Account') : 'Save my progress'}</Link>
-        </nav>
+      <header className="top">
+        <div className="in">
+          <Link to="/" className="logo"><span className="mark"><Mark /></span>Akamata</Link>
+          <nav className="main-nav">
+            <Link to="/#roadmaps" className={'hide-sm' + (home ? ' on' : '')}>Explore roadmaps</Link>
+            <Link to="/#how" className="hide-sm">How it works</Link>
+            <Link to="/story" className={'hide-sm' + (pathname === '/story' ? ' on' : '')}>Our story</Link>
+            {isAdmin && <Link to="/admin">Manage content</Link>}
+            <Link to="/account" className="pill">{session ? (profile?.name || 'Account') : 'Save my progress'}</Link>
+          </nav>
+        </div>
       </header>
-      <main>
+      <main className={home ? 'wide' : ''}>
         <Routes>
           <Route path="/" element={<Library />} />
           <Route path="/m/:id" element={<Module />} />
           <Route path="/account" element={<Account />} />
+          <Route path="/story" element={<Story />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
           <Route path="/admin" element={<AdminOnly><Admin /></AdminOnly>} />
           <Route path="/admin/:id" element={<AdminOnly><Editor /></AdminOnly>} />
           <Route path="*" element={<p>Page not found.</p>} />
         </Routes>
       </main>
+      <Footer />
     </>
   )
 }
