@@ -7,7 +7,6 @@ import {
 import { supabase } from '../lib/supabase'
 import { useProgress } from '../lib/progress'
 import { HeroArt } from '../components/Art'
-import { CONTACT } from '../config'
 
 const ICONS = [
   [/market|ads|seo|content/i, Megaphone],
@@ -140,7 +139,7 @@ export default function Library() {
 
         {error && <p>{error}</p>}
         {!error && !modules && <p className="muted">Loading roadmaps…</p>}
-        {modules && shown.length === 0 && <p className="muted">Nothing matches yet. Try a different word, or suggest a roadmap below.</p>}
+        {modules && shown.length === 0 && <p className="muted">Nothing matches yet. <Link to={`/suggest${q.trim() ? `?subject=${encodeURIComponent(q.trim())}` : ''}`}>Suggest it as a roadmap</Link>.</p>}
         <div className="grid">
           {shown.map((m) => {
             const Icon = iconFor(m.role), p = pct(m), feat = m.id === firstId
@@ -163,7 +162,7 @@ export default function Library() {
 
         <div className="grid-foot">
           <span className="muted">{count} thoughtfully mapped {count === 1 ? 'path' : 'paths'}. More beginnings on the way.</span>
-          <a href={CONTACT}>Missing your next step? Suggest a roadmap <ArrowUpRight size={12} /></a>
+          <Link to="/suggest">Missing your next step? Suggest a roadmap <ArrowUpRight size={12} /></Link>
         </div>
       </section>
 

@@ -655,6 +655,49 @@ h1.display {
   text-decoration: none
 }
 
+/* suggest form and admin requests */
+.hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden
+}
+
+.req {
+  color: var(--no)
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--mu);
+  margin: 6px 0 0
+}
+
+.req-item {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--ln)
+}
+
+.req-item:last-child {
+  border: 0
+}
+
+.req-item p {
+  margin: 6px 0;
+  white-space: pre-wrap
+}
+
+.tag {
+  display: inline-block;
+  font-size: 11px;
+  background: var(--sage);
+  color: var(--br);
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-left: 8px
+}
+
 /* how it works and call to action */
 .how {
   display: grid;

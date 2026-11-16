@@ -19,7 +19,7 @@ export default function Footer() {
           <div>
             <h4>Good to know</h4>
             <Link to="/story">Our story</Link>
-            <a href={CONTACT}>Suggest a roadmap <ArrowUpRight size={12} /></a>
+            <Link to="/suggest">Suggest a roadmap <ArrowUpRight size={12} /></Link>
           </div>
         </div>
         <div className="quote">
