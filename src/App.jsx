@@ -10,6 +10,7 @@ import Admin from './pages/Admin'
 import Editor from './pages/Editor'
 import Suggest from './pages/Suggest'
 import Requests from './pages/Requests'
+import Contact from './pages/Contact'
 import { Privacy, Story, Terms } from './pages/Static'
 
 function AdminOnly({ children }) {
@@ -47,6 +48,7 @@ export default function App() {
           <Route path="/account" element={<Account />} />
           <Route path="/story" element={<Story />} />
           <Route path="/suggest" element={<Suggest />} />
+          <Route path="/contact" element={<Contact />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/admin" element={<AdminOnly><Admin /></AdminOnly>} />
