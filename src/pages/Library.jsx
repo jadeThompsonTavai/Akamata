@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useProgress } from '../lib/progress'
+import { fmtTime, pathStats } from '../lib/format'
 import { HeroArt } from '../components/Art'
 
 const ICONS = [
@@ -21,6 +22,7 @@ export default function Library() {
   const [progress] = useProgress()
   const { hash, key } = useLocation()
   const [modules, setModules] = useState(null)
+  const [paths, setPaths] = useState(null)
   const [error, setError] = useState('')
   const [role, setRole] = useState('All')
   const [q, setQ] = useState('')
@@ -29,9 +31,14 @@ export default function Library() {
   const search = useRef(null)
 
   useEffect(() => {
-    supabase.from('modules').select('id,title,role,summary,mins,steps,quiz')
-      .eq('published', true).order('created_at')
-      .then(({ data, error }) => (error ? setError('Couldn’t load roadmaps. Check your connection and try again.') : setModules(data)))
+    Promise.all([
+      supabase.from('modules').select('id,title,role,summary,mins,steps,quiz').eq('published', true).order('created_at'),
+      supabase.from('pathways').select('id,title,category,summary,level,module_ids').eq('published', true).order('created_at')
+    ]).then(([m, p]) => {
+      if (m.error) return setError('Couldn’t load roadmaps. Check your connection and try again.')
+      setModules(m.data)
+      setPaths(p.error ? [] : p.data) // the page still works before the pathways table exists
+    })
   }, [])
 
   // Scroll to #roadmaps / #how when arriving from another page or clicking a nav link.
@@ -49,28 +56,50 @@ export default function Library() {
     return () => removeEventListener('keydown', onKey)
   }, [])
 
+  // Roadmaps (pathways) first, then any guides that aren't part of a roadmap.
+  const items = useMemo(() => {
+    if (!modules || !paths) return null
+    const byId = Object.fromEntries(modules.map((m) => [m.id, m]))
+    const inPath = new Set()
+    const roadmaps = paths.map((pw) => {
+      const st = pathStats(pw, byId, progress)
+      if (!st.mods.length) return null
+      st.mods.forEach((m) => inPath.add(m.id))
+      return {
+        key: 'p' + pw.id, to: `/p/${pw.id}`, title: pw.title, role: pw.category, summary: pw.summary, mins: st.mins,
+        meta: `${st.mods.length} ${st.mods.length === 1 ? 'stage' : 'stages'} · ${fmtTime(st.mins)} · ${pw.level}`,
+        pct: Math.round((st.done / st.mods.length) * 100)
+      }
+    }).filter(Boolean)
+    const guides = modules.filter((m) => !inPath.has(m.id)).map((m) => {
+      const p = progress[m.id], n = m.steps.length + (m.quiz ? 1 : 0)
+      return {
+        key: 'm' + m.id, to: `/m/${m.id}`, title: m.title, role: m.role, summary: m.summary, mins: m.mins,
+        meta: `${m.steps.length} steps · ${m.mins} min`,
+        pct: p ? (p.done ? 100 : Math.round((p.step / n) * 100)) : 0
+      }
+    })
+    return [...roadmaps, ...guides]
+  }, [modules, paths, progress])
+
   const roles = useMemo(() => {
     const counts = {}
-    ;(modules || []).forEach((m) => { counts[m.role] = (counts[m.role] || 0) + 1 })
+    ;(items || []).forEach((it) => { counts[it.role] = (counts[it.role] || 0) + 1 })
     return counts
-  }, [modules])
+  }, [items])
 
   const shown = useMemo(() => {
     const term = q.trim().toLowerCase()
-    const list = (modules || []).filter((m) =>
-      (role === 'All' || m.role === role) &&
-      (!term || `${m.title} ${m.summary} ${m.role}`.toLowerCase().includes(term)))
+    const list = (items || []).filter((it) =>
+      (role === 'All' || it.role === role) &&
+      (!term || `${it.title} ${it.summary} ${it.role}`.toLowerCase().includes(term)))
     if (sort === 'short') list.sort((a, b) => a.mins - b.mins)
     if (sort === 'az') list.sort((a, b) => a.title.localeCompare(b.title))
     return list
-  }, [modules, role, q, sort])
+  }, [items, role, q, sort])
 
-  const firstId = modules?.[0]?.id
-  const pct = (m) => {
-    const p = progress[m.id]; const n = m.steps.length + (m.quiz ? 1 : 0)
-    return p ? (p.done ? 100 : Math.round((p.step / n) * 100)) : 0
-  }
-  const count = modules?.length || 0
+  const first = items?.[0]
+  const count = items?.length || 0
 
   return (
     <>
@@ -138,21 +167,23 @@ export default function Library() {
         </div>
 
         {error && <p>{error}</p>}
-        {!error && !modules && <p className="muted">Loading roadmaps…</p>}
-        {modules && shown.length === 0 && <p className="muted">Nothing matches yet. <Link to={`/suggest${q.trim() ? `?subject=${encodeURIComponent(q.trim())}` : ''}`}>Suggest it as a roadmap</Link>.</p>}
+        {!error && !items && <p className="muted">Loading roadmaps…</p>}
+        {items && shown.length === 0 && (
+          <p className="muted">Nothing matches yet. <Link to={`/suggest${q.trim() ? `?subject=${encodeURIComponent(q.trim())}` : ''}`}>Suggest it as a roadmap</Link>.</p>
+        )}
         <div className="grid">
-          {shown.map((m) => {
-            const Icon = iconFor(m.role), p = pct(m), feat = m.id === firstId
+          {shown.map((it) => {
+            const Icon = iconFor(it.role), feat = it.key === first?.key
             return (
-              <Link key={m.id} to={`/m/${m.id}`} className={'card' + (feat ? ' feat' : '')}>
+              <Link key={it.key} to={it.to} className={'card' + (feat ? ' feat' : '')}>
                 <div className="card-top">
-                  <span className="cat"><Icon size={14} /> {m.role}</span>
+                  <span className="cat"><Icon size={14} /> {it.role}</span>
                   {feat && <span className="badge">Good first step</span>}
                 </div>
-                <h2>{m.title}</h2>
-                <p className="muted">{m.summary}</p>
+                <h2>{it.title}</h2>
+                <p className="muted">{it.summary}</p>
                 <div className="card-foot">
-                  <span>{m.steps.length} steps · {m.mins} min{p === 100 ? ' · Complete' : p > 0 ? ` · ${p}%` : ''}</span>
+                  <span>{it.meta}{it.pct === 100 ? ' · Complete' : it.pct > 0 ? ` · ${it.pct}%` : ''}</span>
                   <ArrowUpRight size={15} />
                 </div>
               </Link>
@@ -184,7 +215,7 @@ export default function Library() {
             <h2>You don’t have to see the whole path to begin.</h2>
             <p className="muted">That’s the spirit of Akamata. A welcoming place to start again, try something new, and grow.</p>
           </div>
-          <Link to={firstId ? `/m/${firstId}` : '/#roadmaps'} className="btn-dark">Take the first step <ArrowUpRight size={15} /></Link>
+          <Link to={first ? first.to : '/#roadmaps'} className="btn-dark">Take the first step <ArrowUpRight size={15} /></Link>
         </div>
       </div>
     </>

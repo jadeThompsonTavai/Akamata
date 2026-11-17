@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import { supabase } from '../lib/supabase'
 import { useProgress } from '../lib/progress'
@@ -10,11 +10,29 @@ export default function Module() {
   const [error, setError] = useState(false)
   const [picked, setPicked] = useState(null)
   const [progress, save] = useProgress()
+  const [params] = useSearchParams()
+  const pid = params.get('p') // set when this guide is opened as a stage of a roadmap
+  const [path, setPath] = useState(null)
+  const [next, setNext] = useState(null)
 
   useEffect(() => {
     supabase.from('modules').select('*').eq('id', id).single()
       .then(({ data, error }) => (error ? setError(true) : setM(data)))
   }, [id])
+
+  useEffect(() => {
+    if (!pid) return
+    supabase.from('pathways').select('id,title,module_ids').eq('id', pid).single().then(async ({ data }) => {
+      const at = data ? data.module_ids.indexOf(id) : -1
+      if (at < 0) return
+      setPath({ id: data.id, title: data.title })
+      const rest = data.module_ids.slice(at + 1)
+      if (!rest.length) return
+      const { data: found } = await supabase.from('modules').select('id').in('id', rest)
+      const ok = new Set((found || []).map((r) => r.id))
+      setNext(rest.find((x) => ok.has(x)) || null)
+    })
+  }, [pid, id])
 
   if (error) return <p>We couldn’t find that guide. <Link to="/">Back to the library</Link></p>
   if (!m) return <p>Loading…</p>
@@ -29,7 +47,10 @@ export default function Module() {
         <p className="muted">{m.title}</p>
         <div className="row">
           <button onClick={() => save(id, 0, true)}>Review again</button>
-          <Link className="btn primary" to="/">Back to the library</Link>
+          <span>
+            <Link className="btn" to={path ? `/p/${path.id}` : '/'}>{path ? 'Back to the roadmap' : 'Back to the library'}</Link>{' '}
+            {next && <Link className="btn primary" to={`/m/${next}?p=${path.id}`}>Next stage</Link>}
+          </span>
         </div>
       </div>
     )
@@ -44,7 +65,7 @@ export default function Module() {
 
   return (
     <>
-      <Link to="/">Back to the library</Link>
+      <Link to={path ? `/p/${path.id}` : '/'}>{path ? `Back to ${path.title}` : 'Back to the library'}</Link>
       <h1>{m.title}</h1>
       <div className="bar"><i style={{ width: `${Math.round((i / n) * 100)}%` }} /></div>
       <p className="muted">Step {i + 1} of {n}</p>

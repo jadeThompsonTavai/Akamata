@@ -32,6 +32,7 @@ export default function Admin() {
       <div className="row">
         <h1>Manage content</h1>
         <span>
+          <Link className="btn" to="/admin/pathways">Pathways</Link>{' '}
           <Link className="btn" to="/admin/requests">Requests{fresh ? ` (${fresh} new)` : ''}</Link>{' '}
           <Link className="btn primary" to="/admin/new">New guide</Link>
         </span>

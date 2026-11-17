@@ -11,6 +11,9 @@ import Editor from './pages/Editor'
 import Suggest from './pages/Suggest'
 import Requests from './pages/Requests'
 import Contact from './pages/Contact'
+import Pathway from './pages/Pathway'
+import Pathways from './pages/Pathways'
+import PathwayEditor from './pages/PathwayEditor'
 import { Privacy, Story, Terms } from './pages/Static'
 
 function AdminOnly({ children }) {
@@ -24,6 +27,7 @@ export default function App() {
   const { session, profile, isAdmin } = useAuth()
   const { pathname, hash } = useLocation()
   const home = pathname === '/'
+  const wide = home || pathname.startsWith('/p/')
 
   useEffect(() => { if (!hash) window.scrollTo(0, 0) }, [pathname, hash])
 
@@ -41,7 +45,7 @@ export default function App() {
           </nav>
         </div>
       </header>
-      <main className={home ? 'wide' : ''}>
+      <main className={wide ? 'wide' : ''}>
         <Routes>
           <Route path="/" element={<Library />} />
           <Route path="/m/:id" element={<Module />} />
@@ -49,10 +53,13 @@ export default function App() {
           <Route path="/story" element={<Story />} />
           <Route path="/suggest" element={<Suggest />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/p/:id" element={<Pathway />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/admin" element={<AdminOnly><Admin /></AdminOnly>} />
           <Route path="/admin/requests" element={<AdminOnly><Requests /></AdminOnly>} />
+          <Route path="/admin/pathways" element={<AdminOnly><Pathways /></AdminOnly>} />
+          <Route path="/admin/pathways/:id" element={<AdminOnly><PathwayEditor /></AdminOnly>} />
           <Route path="/admin/:id" element={<AdminOnly><Editor /></AdminOnly>} />
           <Route path="*" element={<p>Page not found.</p>} />
         </Routes>
