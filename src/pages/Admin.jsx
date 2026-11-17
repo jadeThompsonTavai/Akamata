@@ -5,9 +5,14 @@ import { mediaPathsIn, removeMedia } from '../lib/media'
 
 export default function Admin() {
   const [mods, setMods] = useState(null)
+  const [fresh, setFresh] = useState(0) // requests not yet looked at
   const load = () => supabase.from('modules').select('id,title,role,published,steps').order('created_at')
     .then(({ data }) => setMods(data))
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    supabase.from('requests').select('id', { count: 'exact', head: true }).eq('status', 'new')
+      .then(({ count }) => setFresh(count || 0))
+  }, [])
 
   async function togglePublish(m) {
     await supabase.from('modules').update({ published: !m.published }).eq('id', m.id)
@@ -24,7 +29,13 @@ export default function Admin() {
   if (!mods) return <p>Loading…</p>
   return (
     <>
-      <div className="row"><h1>Manage content</h1><Link className="btn primary" to="/admin/new">New guide</Link></div>
+      <div className="row">
+        <h1>Manage content</h1>
+        <span>
+          <Link className="btn" to="/admin/requests">Requests{fresh ? ` (${fresh} new)` : ''}</Link>{' '}
+          <Link className="btn primary" to="/admin/new">New guide</Link>
+        </span>
+      </div>
       <div className="panel">
         {mods.length === 0 && <p className="muted">No guides yet. Create your first one.</p>}
         {mods.map((m) => (

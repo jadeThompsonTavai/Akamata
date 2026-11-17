@@ -8,6 +8,9 @@ import Module from './pages/Module'
 import Account from './pages/Account'
 import Admin from './pages/Admin'
 import Editor from './pages/Editor'
+import Suggest from './pages/Suggest'
+import Requests from './pages/Requests'
+import Contact from './pages/Contact'
 import { Privacy, Story, Terms } from './pages/Static'
 
 function AdminOnly({ children }) {
@@ -44,9 +47,12 @@ export default function App() {
           <Route path="/m/:id" element={<Module />} />
           <Route path="/account" element={<Account />} />
           <Route path="/story" element={<Story />} />
+          <Route path="/suggest" element={<Suggest />} />
+          <Route path="/contact" element={<Contact />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/admin" element={<AdminOnly><Admin /></AdminOnly>} />
+          <Route path="/admin/requests" element={<AdminOnly><Requests /></AdminOnly>} />
           <Route path="/admin/:id" element={<AdminOnly><Editor /></AdminOnly>} />
           <Route path="*" element={<p>Page not found.</p>} />
         </Routes>

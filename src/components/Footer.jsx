@@ -19,7 +19,7 @@ export default function Footer() {
           <div>
             <h4>Good to know</h4>
             <Link to="/story">Our story</Link>
-            <a href={CONTACT}>Suggest a roadmap <ArrowUpRight size={12} /></a>
+            <Link to="/suggest">Suggest a roadmap <ArrowUpRight size={12} /></Link>
           </div>
         </div>
         <div className="quote">
@@ -27,11 +27,11 @@ export default function Footer() {
           When the hands are nimble and practiced, the expert is successful.
         </div>
         <div className="legal">
-          <span>© {new Date().getFullYear()} Tāmata. Made for fresh starts.</span>
+          <span>© {new Date().getFullYear()} Akamata. Made for fresh starts.</span>
           <span>
             <Link to="/privacy">Privacy</Link>
             <Link to="/terms">Terms</Link>
-            <a href={CONTACT}>Say hello <ArrowUpRight size={12} /></a>
+            <Link to="/contact">Get in Touch <ArrowUpRight size={12} /></Link>
           </span>
         </div>
       </div>
